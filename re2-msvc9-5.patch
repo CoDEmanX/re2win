@@ -1,0 +1,833 @@
+diff -urN -w re2-orig/AUTHORS re2/AUTHORS
+--- re2-orig/AUTHORS	2011-09-30 22:57:39.000000000 -0500
++++ re2/AUTHORS	2011-11-27 13:59:16.943172300 -0600
+@@ -8,5 +8,6 @@
+ 
+ # Please keep the list sorted.
+ 
++Brian Gunlogson <unixman83@gmail.com>
+ Google Inc.
+ Stefano Rivera <stefano.rivera@gmail.com>
+diff -urN -w re2-orig/CONTRIBUTORS re2/CONTRIBUTORS
+--- re2-orig/CONTRIBUTORS	2011-09-30 22:57:39.000000000 -0500
++++ re2/CONTRIBUTORS	2011-11-27 13:57:59.255036800 -0600
+@@ -26,6 +26,7 @@
+ 
+ # Please keep the list sorted.
+ 
++Brian Gunlogson <unixman83@gmail.com>
+ Rob Pike <r@google.com>
+ Russ Cox <rsc@swtch.com>
+ Sanjay Ghemawat <sanjay@google.com>
+diff -urN -w re2-orig/mswin/stdint.h re2/mswin/stdint.h
+--- re2-orig/mswin/stdint.h	1969-12-31 18:00:00.000000000 -0600
++++ re2/mswin/stdint.h	2011-11-27 14:14:20.072550300 -0600
+@@ -0,0 +1,247 @@
++// ISO C9x  compliant stdint.h for Microsoft Visual Studio
++// Based on ISO/IEC 9899:TC2 Committee draft (May 6, 2005) WG14/N1124 
++// 
++//  Copyright (c) 2006-2008 Alexander Chemeris
++// 
++// Redistribution and use in source and binary forms, with or without
++// modification, are permitted provided that the following conditions are met:
++// 
++//   1. Redistributions of source code must retain the above copyright notice,
++//      this list of conditions and the following disclaimer.
++// 
++//   2. Redistributions in binary form must reproduce the above copyright
++//      notice, this list of conditions and the following disclaimer in the
++//      documentation and/or other materials provided with the distribution.
++// 
++//   3. The name of the author may be used to endorse or promote products
++//      derived from this software without specific prior written permission.
++// 
++// THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
++// WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
++// MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO
++// EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
++// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
++// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
++// OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
++// WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
++// OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
++// ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++// 
++///////////////////////////////////////////////////////////////////////////////
++
++#ifndef _MSC_VER // [
++#error "Use this header only with Microsoft Visual C++ compilers!"
++#endif // _MSC_VER ]
++
++#ifndef _MSC_STDINT_H_ // [
++#define _MSC_STDINT_H_
++
++#if _MSC_VER > 1000
++#pragma once
++#endif
++
++#include <limits.h>
++
++// For Visual Studio 6 in C++ mode and for many Visual Studio versions when
++// compiling for ARM we should wrap <wchar.h> include with 'extern "C++" {}'
++// or compiler give many errors like this:
++//   error C2733: second C linkage of overloaded function 'wmemchr' not allowed
++#ifdef __cplusplus
++extern "C" {
++#endif
++#  include <wchar.h>
++#ifdef __cplusplus
++}
++#endif
++
++// Define _W64 macros to mark types changing their size, like intptr_t.
++#ifndef _W64
++#  if !defined(__midl) && (defined(_X86_) || defined(_M_IX86)) && _MSC_VER >= 1300
++#     define _W64 __w64
++#  else
++#     define _W64
++#  endif
++#endif
++
++
++// 7.18.1 Integer types
++
++// 7.18.1.1 Exact-width integer types
++
++// Visual Studio 6 and Embedded Visual C++ 4 doesn't
++// realize that, e.g. char has the same size as __int8
++// so we give up on __intX for them.
++#if (_MSC_VER < 1300)
++   typedef signed char       int8_t;
++   typedef signed short      int16_t;
++   typedef signed int        int32_t;
++   typedef unsigned char     uint8_t;
++   typedef unsigned short    uint16_t;
++   typedef unsigned int      uint32_t;
++#else
++   typedef signed __int8     int8_t;
++   typedef signed __int16    int16_t;
++   typedef signed __int32    int32_t;
++   typedef unsigned __int8   uint8_t;
++   typedef unsigned __int16  uint16_t;
++   typedef unsigned __int32  uint32_t;
++#endif
++typedef signed __int64       int64_t;
++typedef unsigned __int64     uint64_t;
++
++
++// 7.18.1.2 Minimum-width integer types
++typedef int8_t    int_least8_t;
++typedef int16_t   int_least16_t;
++typedef int32_t   int_least32_t;
++typedef int64_t   int_least64_t;
++typedef uint8_t   uint_least8_t;
++typedef uint16_t  uint_least16_t;
++typedef uint32_t  uint_least32_t;
++typedef uint64_t  uint_least64_t;
++
++// 7.18.1.3 Fastest minimum-width integer types
++typedef int8_t    int_fast8_t;
++typedef int16_t   int_fast16_t;
++typedef int32_t   int_fast32_t;
++typedef int64_t   int_fast64_t;
++typedef uint8_t   uint_fast8_t;
++typedef uint16_t  uint_fast16_t;
++typedef uint32_t  uint_fast32_t;
++typedef uint64_t  uint_fast64_t;
++
++// 7.18.1.4 Integer types capable of holding object pointers
++#ifdef _WIN64 // [
++   typedef signed __int64    intptr_t;
++   typedef unsigned __int64  uintptr_t;
++#else // _WIN64 ][
++   typedef _W64 signed int   intptr_t;
++   typedef _W64 unsigned int uintptr_t;
++#endif // _WIN64 ]
++
++// 7.18.1.5 Greatest-width integer types
++typedef int64_t   intmax_t;
++typedef uint64_t  uintmax_t;
++
++
++// 7.18.2 Limits of specified-width integer types
++
++#if !defined(__cplusplus) || defined(__STDC_LIMIT_MACROS) // [   See footnote 220 at page 257 and footnote 221 at page 259
++
++// 7.18.2.1 Limits of exact-width integer types
++#define INT8_MIN     ((int8_t)_I8_MIN)
++#define INT8_MAX     _I8_MAX
++#define INT16_MIN    ((int16_t)_I16_MIN)
++#define INT16_MAX    _I16_MAX
++#define INT32_MIN    ((int32_t)_I32_MIN)
++#define INT32_MAX    _I32_MAX
++#define INT64_MIN    ((int64_t)_I64_MIN)
++#define INT64_MAX    _I64_MAX
++#define UINT8_MAX    _UI8_MAX
++#define UINT16_MAX   _UI16_MAX
++#define UINT32_MAX   _UI32_MAX
++#define UINT64_MAX   _UI64_MAX
++
++// 7.18.2.2 Limits of minimum-width integer types
++#define INT_LEAST8_MIN    INT8_MIN
++#define INT_LEAST8_MAX    INT8_MAX
++#define INT_LEAST16_MIN   INT16_MIN
++#define INT_LEAST16_MAX   INT16_MAX
++#define INT_LEAST32_MIN   INT32_MIN
++#define INT_LEAST32_MAX   INT32_MAX
++#define INT_LEAST64_MIN   INT64_MIN
++#define INT_LEAST64_MAX   INT64_MAX
++#define UINT_LEAST8_MAX   UINT8_MAX
++#define UINT_LEAST16_MAX  UINT16_MAX
++#define UINT_LEAST32_MAX  UINT32_MAX
++#define UINT_LEAST64_MAX  UINT64_MAX
++
++// 7.18.2.3 Limits of fastest minimum-width integer types
++#define INT_FAST8_MIN    INT8_MIN
++#define INT_FAST8_MAX    INT8_MAX
++#define INT_FAST16_MIN   INT16_MIN
++#define INT_FAST16_MAX   INT16_MAX
++#define INT_FAST32_MIN   INT32_MIN
++#define INT_FAST32_MAX   INT32_MAX
++#define INT_FAST64_MIN   INT64_MIN
++#define INT_FAST64_MAX   INT64_MAX
++#define UINT_FAST8_MAX   UINT8_MAX
++#define UINT_FAST16_MAX  UINT16_MAX
++#define UINT_FAST32_MAX  UINT32_MAX
++#define UINT_FAST64_MAX  UINT64_MAX
++
++// 7.18.2.4 Limits of integer types capable of holding object pointers
++#ifdef _WIN64 // [
++#  define INTPTR_MIN   INT64_MIN
++#  define INTPTR_MAX   INT64_MAX
++#  define UINTPTR_MAX  UINT64_MAX
++#else // _WIN64 ][
++#  define INTPTR_MIN   INT32_MIN
++#  define INTPTR_MAX   INT32_MAX
++#  define UINTPTR_MAX  UINT32_MAX
++#endif // _WIN64 ]
++
++// 7.18.2.5 Limits of greatest-width integer types
++#define INTMAX_MIN   INT64_MIN
++#define INTMAX_MAX   INT64_MAX
++#define UINTMAX_MAX  UINT64_MAX
++
++// 7.18.3 Limits of other integer types
++
++#ifdef _WIN64 // [
++#  define PTRDIFF_MIN  _I64_MIN
++#  define PTRDIFF_MAX  _I64_MAX
++#else  // _WIN64 ][
++#  define PTRDIFF_MIN  _I32_MIN
++#  define PTRDIFF_MAX  _I32_MAX
++#endif  // _WIN64 ]
++
++#define SIG_ATOMIC_MIN  INT_MIN
++#define SIG_ATOMIC_MAX  INT_MAX
++
++#ifndef SIZE_MAX // [
++#  ifdef _WIN64 // [
++#     define SIZE_MAX  _UI64_MAX
++#  else // _WIN64 ][
++#     define SIZE_MAX  _UI32_MAX
++#  endif // _WIN64 ]
++#endif // SIZE_MAX ]
++
++// WCHAR_MIN and WCHAR_MAX are also defined in <wchar.h>
++#ifndef WCHAR_MIN // [
++#  define WCHAR_MIN  0
++#endif  // WCHAR_MIN ]
++#ifndef WCHAR_MAX // [
++#  define WCHAR_MAX  _UI16_MAX
++#endif  // WCHAR_MAX ]
++
++#define WINT_MIN  0
++#define WINT_MAX  _UI16_MAX
++
++#endif // __STDC_LIMIT_MACROS ]
++
++
++// 7.18.4 Limits of other integer types
++
++#if !defined(__cplusplus) || defined(__STDC_CONSTANT_MACROS) // [   See footnote 224 at page 260
++
++// 7.18.4.1 Macros for minimum-width integer constants
++
++#define INT8_C(val)  val##i8
++#define INT16_C(val) val##i16
++#define INT32_C(val) val##i32
++#define INT64_C(val) val##i64
++
++#define UINT8_C(val)  val##ui8
++#define UINT16_C(val) val##ui16
++#define UINT32_C(val) val##ui32
++#define UINT64_C(val) val##ui64
++
++// 7.18.4.2 Macros for greatest-width integer constants
++#define INTMAX_C   INT64_C
++#define UINTMAX_C  UINT64_C
++
++#endif // __STDC_CONSTANT_MACROS ]
++
++
++#endif // _MSC_STDINT_H_ ]
+diff -urN -w re2-orig/re2/compile.cc re2/re2/compile.cc
+--- re2-orig/re2/compile.cc	2011-09-30 22:57:39.000000000 -0500
++++ re2/re2/compile.cc	2011-11-27 14:14:20.088150300 -0600
+@@ -501,7 +501,7 @@
+     return UncachedRuneByteSuffix(lo, hi, foldcase, next);
+   }
+ 
+-  uint64 key = ((uint64)next << 17) | (lo<<9) | (hi<<1) | foldcase;
++  uint64 key = ((uint64)next << 17) | (lo<<9) | (hi<<1) | (foldcase ? 1ULL : 0ULL);
+   map<uint64, int>::iterator it = rune_cache_.find(key);
+   if (it != rune_cache_.end())
+     return it->second;
+diff -urN -w re2-orig/re2/prefilter_tree.cc re2/re2/prefilter_tree.cc
+--- re2-orig/re2/prefilter_tree.cc	2011-09-30 22:57:39.000000000 -0500
++++ re2/re2/prefilter_tree.cc	2011-11-27 14:14:20.088150300 -0600
+@@ -8,6 +8,11 @@
+ #include "re2/prefilter_tree.h"
+ #include "re2/re2.h"
+ 
++#ifdef WIN32
++#include <stdio.h>
++#define snprintf _snprintf
++#endif
++
+ DEFINE_int32(filtered_re2_min_atom_len,
+              3,
+              "Strings less than this length are not stored as atoms");
+diff -urN -w re2-orig/re2/re2.cc re2/re2/re2.cc
+--- re2-orig/re2/re2.cc	2011-09-30 22:57:39.000000000 -0500
++++ re2/re2/re2.cc	2011-11-27 14:14:20.088150300 -0600
+@@ -11,7 +11,13 @@
+ 
+ #include <stdio.h>
+ #include <string>
++#ifdef WIN32
++#define strtoll _strtoi64
++#define strtoull _strtoui64
++#define strtof strtod
++#else
+ #include <pthread.h>
++#endif
+ #include <errno.h>
+ #include "util/util.h"
+ #include "util/flags.h"
+@@ -31,8 +37,6 @@
+ const VariadicFunction2<bool, StringPiece*, const RE2&, RE2::Arg, RE2::ConsumeN> RE2::Consume;
+ const VariadicFunction2<bool, StringPiece*, const RE2&, RE2::Arg, RE2::FindAndConsumeN> RE2::FindAndConsume;
+ 
+-const int RE2::Options::kDefaultMaxMem;  // initialized in re2.h
+-
+ // Commonly-used option sets; arguments to constructor are:
+ //   utf8 input
+ //   posix syntax
+diff -urN -w re2-orig/re2/re2.h re2/re2/re2.h
+--- re2-orig/re2/re2.h	2011-09-30 22:57:39.000000000 -0500
++++ re2/re2/re2.h	2011-11-27 14:14:20.103750300 -0600
+@@ -5,6 +5,8 @@
+ #ifndef RE2_RE2_H
+ #define RE2_RE2_H
+ 
++#define kDefaultMaxMem (8<<20)
++
+ // C++ interface to the re2 regular-expression library.
+ // RE2 supports Perl-style regular expressions (with extensions like
+ // \d, \w, \s, ...).
+@@ -517,9 +519,6 @@
+     // Once a DFA fills its budget, it flushes its cache and starts over.
+     // If this happens too often, RE2 falls back on the NFA implementation.
+ 
+-    // For now, make the default budget something close to Code Search.
+-    static const int kDefaultMaxMem = 8<<20;
+-
+     enum Encoding {
+       EncodingUTF8 = 1,
+       EncodingLatin1
+diff -urN -w re2-orig/re2/stringpiece.h re2/re2/stringpiece.h
+--- re2-orig/re2/stringpiece.h	2011-09-30 22:57:39.000000000 -0500
++++ re2/re2/stringpiece.h	2011-11-27 14:14:20.103750300 -0600
+@@ -23,6 +23,9 @@
+ #include <cstddef>
+ #include <iosfwd>
+ #include <string>
++#ifdef WIN32
++#include <algorithm>
++#endif
+ 
+ namespace re2 {
+ 
+diff -urN -w re2-orig/re2.vcproj re2/re2.vcproj
+--- re2-orig/re2.vcproj	1969-12-31 18:00:00.000000000 -0600
++++ re2/re2.vcproj	2011-11-27 14:14:20.103750300 -0600
+@@ -0,0 +1,382 @@
++<?xml version="1.0" encoding="Windows-1252"?>
++<VisualStudioProject
++	ProjectType="Visual C++"
++	Version="9.00"
++	Name="re2"
++	ProjectGUID="{494BD4B2-1ADD-4053-981D-BA14D6DF9219}"
++	RootNamespace="re2"
++	Keyword="Win32Proj"
++	TargetFrameworkVersion="196613"
++	>
++	<Platforms>
++		<Platform
++			Name="Win32"
++		/>
++	</Platforms>
++	<ToolFiles>
++	</ToolFiles>
++	<Configurations>
++		<Configuration
++			Name="Debug|Win32"
++			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
++			IntermediateDirectory="$(ConfigurationName)"
++			ConfigurationType="4"
++			CharacterSet="1"
++			>
++			<Tool
++				Name="VCPreBuildEventTool"
++			/>
++			<Tool
++				Name="VCCustomBuildTool"
++			/>
++			<Tool
++				Name="VCXMLDataGeneratorTool"
++			/>
++			<Tool
++				Name="VCWebServiceProxyGeneratorTool"
++			/>
++			<Tool
++				Name="VCMIDLTool"
++			/>
++			<Tool
++				Name="VCCLCompilerTool"
++				Optimization="0"
++				AdditionalIncludeDirectories=".;.\mswin"
++				PreprocessorDefinitions="WIN32;NOMINMAX;DEBUG;_WINDOWS;_UNICODE;NOPCH;WIN32_LEAN_AND_MEAN"
++				MinimalRebuild="true"
++				BasicRuntimeChecks="3"
++				RuntimeLibrary="3"
++				UsePrecompiledHeader="0"
++				WarningLevel="3"
++				DebugInformationFormat="4"
++			/>
++			<Tool
++				Name="VCManagedResourceCompilerTool"
++			/>
++			<Tool
++				Name="VCResourceCompilerTool"
++			/>
++			<Tool
++				Name="VCPreLinkEventTool"
++			/>
++			<Tool
++				Name="VCLibrarianTool"
++			/>
++			<Tool
++				Name="VCALinkTool"
++			/>
++			<Tool
++				Name="VCXDCMakeTool"
++			/>
++			<Tool
++				Name="VCBscMakeTool"
++			/>
++			<Tool
++				Name="VCFxCopTool"
++			/>
++			<Tool
++				Name="VCPostBuildEventTool"
++			/>
++		</Configuration>
++		<Configuration
++			Name="Release|Win32"
++			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
++			IntermediateDirectory="$(ConfigurationName)"
++			ConfigurationType="4"
++			CharacterSet="1"
++			WholeProgramOptimization="1"
++			>
++			<Tool
++				Name="VCPreBuildEventTool"
++			/>
++			<Tool
++				Name="VCCustomBuildTool"
++			/>
++			<Tool
++				Name="VCXMLDataGeneratorTool"
++			/>
++			<Tool
++				Name="VCWebServiceProxyGeneratorTool"
++			/>
++			<Tool
++				Name="VCMIDLTool"
++			/>
++			<Tool
++				Name="VCCLCompilerTool"
++				Optimization="2"
++				EnableIntrinsicFunctions="true"
++				AdditionalIncludeDirectories=".;.\mswin"
++				PreprocessorDefinitions="WIN32;NOMINMAX;NDEBUG;_WINDOWS;_UNICODE;NOPCH;WIN32_LEAN_AND_MEAN"
++				StringPooling="true"
++				RuntimeLibrary="2"
++				EnableFunctionLevelLinking="true"
++				UsePrecompiledHeader="0"
++				WarningLevel="3"
++				DebugInformationFormat="3"
++			/>
++			<Tool
++				Name="VCManagedResourceCompilerTool"
++			/>
++			<Tool
++				Name="VCResourceCompilerTool"
++			/>
++			<Tool
++				Name="VCPreLinkEventTool"
++			/>
++			<Tool
++				Name="VCLibrarianTool"
++			/>
++			<Tool
++				Name="VCALinkTool"
++			/>
++			<Tool
++				Name="VCXDCMakeTool"
++			/>
++			<Tool
++				Name="VCBscMakeTool"
++			/>
++			<Tool
++				Name="VCFxCopTool"
++			/>
++			<Tool
++				Name="VCPostBuildEventTool"
++			/>
++		</Configuration>
++	</Configurations>
++	<References>
++	</References>
++	<Files>
++		<Filter
++			Name="Source Files"
++			Filter="cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx"
++			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
++			>
++			<File
++				RelativePath=".\util\arena.cc"
++				>
++			</File>
++			<File
++				RelativePath=".\re2\bitstate.cc"
++				>
++			</File>
++			<File
++				RelativePath=".\re2\compile.cc"
++				>
++			</File>
++			<File
++				RelativePath=".\re2\dfa.cc"
++				>
++			</File>
++			<File
++				RelativePath=".\re2\filtered_re2.cc"
++				>
++			</File>
++			<File
++				RelativePath=".\util\hash.cc"
++				>
++			</File>
++			<File
++				RelativePath=".\re2\mimics_pcre.cc"
++				>
++			</File>
++			<File
++				RelativePath=".\re2\nfa.cc"
++				>
++			</File>
++			<File
++				RelativePath=".\re2\onepass.cc"
++				>
++			</File>
++			<File
++				RelativePath=".\re2\parse.cc"
++				>
++			</File>
++			<File
++				RelativePath=".\re2\perl_groups.cc"
++				>
++			</File>
++			<File
++				RelativePath=".\re2\prefilter.cc"
++				>
++			</File>
++			<File
++				RelativePath=".\re2\prefilter_tree.cc"
++				>
++			</File>
++			<File
++				RelativePath=".\re2\prog.cc"
++				>
++			</File>
++			<File
++				RelativePath=".\re2\re2.cc"
++				>
++			</File>
++			<File
++				RelativePath=".\re2\regexp.cc"
++				>
++			</File>
++			<File
++				RelativePath=".\util\rune.cc"
++				>
++			</File>
++			<File
++				RelativePath=".\re2\set.cc"
++				>
++			</File>
++			<File
++				RelativePath=".\re2\simplify.cc"
++				>
++			</File>
++			<File
++				RelativePath=".\util\stringpiece.cc"
++				>
++			</File>
++			<File
++				RelativePath=".\util\stringprintf.cc"
++				>
++			</File>
++			<File
++				RelativePath=".\util\strutil.cc"
++				>
++			</File>
++			<File
++				RelativePath=".\re2\tostring.cc"
++				>
++			</File>
++			<File
++				RelativePath=".\re2\unicode_casefold.cc"
++				>
++			</File>
++			<File
++				RelativePath=".\re2\unicode_groups.cc"
++				>
++			</File>
++			<File
++				RelativePath=".\util\valgrind.cc"
++				>
++			</File>
++		</Filter>
++		<Filter
++			Name="Header Files"
++			Filter="h;hpp;hxx;hm;inl;inc;xsd"
++			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
++			>
++			<File
++				RelativePath=".\util\arena.h"
++				>
++			</File>
++			<File
++				RelativePath=".\util\atomicops.h"
++				>
++			</File>
++			<File
++				RelativePath=".\util\benchmark.h"
++				>
++			</File>
++			<File
++				RelativePath=".\re2\filtered_re2.h"
++				>
++			</File>
++			<File
++				RelativePath=".\util\flags.h"
++				>
++			</File>
++			<File
++				RelativePath=".\util\logging.h"
++				>
++			</File>
++			<File
++				RelativePath=".\util\mutex.h"
++				>
++			</File>
++			<File
++				RelativePath=".\util\pcre.h"
++				>
++			</File>
++			<File
++				RelativePath=".\re2\prefilter.h"
++				>
++			</File>
++			<File
++				RelativePath=".\re2\prefilter_tree.h"
++				>
++			</File>
++			<File
++				RelativePath=".\re2\prog.h"
++				>
++			</File>
++			<File
++				RelativePath=".\util\random.h"
++				>
++			</File>
++			<File
++				RelativePath=".\re2\re2.h"
++				>
++			</File>
++			<File
++				RelativePath=".\re2\regexp.h"
++				>
++			</File>
++			<File
++				RelativePath=".\re2\set.h"
++				>
++			</File>
++			<File
++				RelativePath=".\util\sparse_array.h"
++				>
++			</File>
++			<File
++				RelativePath=".\util\sparse_set.h"
++				>
++			</File>
++			<File
++				RelativePath=".\stdint.h"
++				>
++			</File>
++			<File
++				RelativePath=".\re2\stringpiece.h"
++				>
++			</File>
++			<File
++				RelativePath=".\util\test.h"
++				>
++			</File>
++			<File
++				RelativePath=".\re2\unicode_casefold.h"
++				>
++			</File>
++			<File
++				RelativePath=".\re2\unicode_groups.h"
++				>
++			</File>
++			<File
++				RelativePath=".\util\utf.h"
++				>
++			</File>
++			<File
++				RelativePath=".\util\util.h"
++				>
++			</File>
++			<File
++				RelativePath=".\util\valgrind.h"
++				>
++			</File>
++			<File
++				RelativePath=".\re2\variadic_function.h"
++				>
++			</File>
++			<File
++				RelativePath=".\re2\walker-inl.h"
++				>
++			</File>
++		</Filter>
++		<Filter
++			Name="Resource Files"
++			Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav"
++			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}"
++			>
++		</Filter>
++	</Files>
++	<Globals>
++	</Globals>
++</VisualStudioProject>
+diff -urN -w re2-orig/util/logging.h re2/util/logging.h
+--- re2-orig/util/logging.h	2011-09-30 22:57:39.000000000 -0500
++++ re2/util/logging.h	2011-11-27 14:14:20.103750300 -0600
+@@ -8,6 +8,9 @@
+ #define RE2_UTIL_LOGGING_H__
+ 
+ #include <sstream>
++#ifdef WIN32
++#include <io.h>
++#endif
+ 
+ // Debug-only checking.
+ #define DCHECK(condition) assert(condition)
+diff -urN -w re2-orig/util/mutex.h re2/util/mutex.h
+--- re2-orig/util/mutex.h	2011-09-30 22:57:39.000000000 -0500
++++ re2/util/mutex.h	2011-11-27 14:14:20.103750300 -0600
+@@ -12,8 +12,10 @@
+ 
+ namespace re2 {
+ 
++#ifndef WIN32
+ #define HAVE_PTHREAD 1
+ #define HAVE_RWLOCK 1
++#endif
+ 
+ #if defined(NO_THREADS)
+   typedef int MutexType;      // to keep a lock-count
+diff -urN -w re2-orig/util/stringprintf.cc re2/util/stringprintf.cc
+--- re2-orig/util/stringprintf.cc	2011-09-30 22:57:39.000000000 -0500
++++ re2/util/stringprintf.cc	2011-11-27 14:14:20.119350300 -0600
+@@ -4,6 +4,10 @@
+ 
+ #include "util/util.h"
+ 
++#ifndef va_copy
++#define va_copy(d,s) ((d) = (s)) //KLUGE: for MS compilers
++#endif
++
+ namespace re2 { 
+ 
+ static void StringAppendV(string* dst, const char* format, va_list ap) {
+diff -urN -w re2-orig/util/util.h re2/util/util.h
+--- re2-orig/util/util.h	2011-09-30 22:57:39.000000000 -0500
++++ re2/util/util.h	2011-11-27 14:14:20.119350300 -0600
+@@ -12,7 +12,9 @@
+ #include <stddef.h>         // For size_t
+ #include <assert.h>
+ #include <stdarg.h>
++#ifndef WIN32
+ #include <sys/time.h>
++#endif
+ #include <time.h>
+ 
+ // C++
+@@ -48,7 +50,11 @@
+ #else
+ 
+ #include <unordered_set>
++#ifdef WIN32
++using std::tr1::unordered_set;
++#else
+ using std::unordered_set;
++#endif
+ 
+ #endif
+ 
+diff -urN -w re2-orig/util/valgrind.h re2/util/valgrind.h
+--- re2-orig/util/valgrind.h	2011-09-30 22:57:39.000000000 -0500
++++ re2/util/valgrind.h	2011-11-27 14:14:20.119350300 -0600
+@@ -4063,7 +4063,7 @@
+ 
+ #endif /* PLAT_ppc64_aix5 */
+ 
+-
++#ifndef WIN32
+ /* ------------------------------------------------------------------ */
+ /* ARCHITECTURE INDEPENDENT MACROS for CLIENT REQUESTS.               */
+ /*                                                                    */
+@@ -4170,7 +4170,7 @@
+                                VG_USERREQ__DISCARD_TRANSLATIONS,  \
+                                _qzz_addr, _qzz_len, 0, 0, 0);     \
+    }
+-
++#endif
+ 
+ /* These requests are for getting Valgrind itself to print something.
+    Possibly with a backtrace.  This is a really ugly hack.  The return value
